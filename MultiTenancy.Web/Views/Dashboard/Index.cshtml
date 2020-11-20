@@ -1,0 +1,6 @@
+﻿@using MultiTenancy.Web.Services;
+@inject ITenantService service;
+
+<div class="alert alert-info">
+    Hello from the tenant specific service: @service.Hello()
+</div>

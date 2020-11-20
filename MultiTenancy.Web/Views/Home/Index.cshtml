@@ -1,8 +1,40 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model MultiTenancy.Web.Models.Home.LoginModel
+@{
+    Layout = null;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="~/css/login.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div class="wrapper fadeInDown">
+        <div id="formContent">
+
+            <div class="alert alert-info">
+                <p>
+                    The available users are:<br />
+                    Single<br />
+                    Multi
+                </p>
+            </div>
+
+            <!-- Login Form -->
+            <form method="post">
+                <input asp-for="Username" class="fadeIn second" placeholder="Username">
+                <p>
+                    <span asp-validation-for="Username"></span>
+                </p>
+                <input type="submit" class="fadeIn fourth" value="Log In">
+            </form>
+
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+</body>
+</html>

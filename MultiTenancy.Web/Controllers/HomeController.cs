@@ -1,31 +1,77 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MultiTenancy.Auth;
 using MultiTenancy.Web.Models;
+using MultiTenancy.Web.Models.Home;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace MultiTenancy.Web.Controllers
 {
+    [AllowAnonymous]
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly AuthContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(AuthContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
         {
-            return View();
+            return View(new LoginModel());
         }
 
-        public IActionResult Privacy()
+        [HttpPost]
+        public async Task<IActionResult> Index(LoginModel model)
         {
-            return View();
+            string activeTenant = "";
+            if (!string.IsNullOrWhiteSpace(model.Username))
+            {
+                var user = _context.Users
+                    .Include(x => x.Tenants)
+                        .ThenInclude(x => x.Tenant)
+                    .SingleOrDefault(x => x.Username.Equals(model.Username, StringComparison.OrdinalIgnoreCase));
+                if (user == null)
+                {
+                    ModelState.AddModelError(nameof(LoginModel.Username), "User not found");
+                }
+                else
+                {
+                    var claims = new List<Claim>();
+                    claims.Add(new Claim(System.Security.Claims.ClaimTypes.Name, user.Username));
+                    foreach (var tenant in user.Tenants)
+                    {
+                        claims.Add(new Claim(Models.Home.ClaimTypes.Tenant, tenant.Tenant.Name));
+                    }
+                    activeTenant = user.Tenants.First().Tenant.Name;
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, 
+                        new ClaimsPrincipal(identity),
+                        new AuthenticationProperties());
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            return RedirectToAction("Index", "Dashboard", new { tenant = activeTenant });
+        }
+
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
