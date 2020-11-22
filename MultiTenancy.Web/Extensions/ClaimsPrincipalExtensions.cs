@@ -8,7 +8,7 @@ namespace MultiTenancy.Web.Extensions
         public static string[] Tenants(this ClaimsPrincipal principal)
         {
             return principal.Claims
-                .Where(x => x.Type == Models.Home.ClaimTypes.Tenant)
+                .Where(x => x.Type == Models.Home.ClaimTypes.TenantFriendly)
                 .Select(x => x.Value)
                 .ToArray();
         }

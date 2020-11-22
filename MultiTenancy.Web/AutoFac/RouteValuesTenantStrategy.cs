@@ -37,7 +37,6 @@ namespace MultiTenancy.Web.AutoFac
             }
             catch
             {
-                // Happens at app startup in IIS 7.0
             }
             return !string.IsNullOrWhiteSpace(tenantId?.ToString());
         }
