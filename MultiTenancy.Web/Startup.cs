@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -12,8 +13,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MultiTenancy.Auth;
+using MultiTenancy.Web.AutoFac;
 using MultiTenancy.Web.Services;
 using System.Linq;
+using System.Security.Claims;
 
 namespace MultiTenancy.Web
 {
@@ -33,6 +36,8 @@ namespace MultiTenancy.Web
                 .RequireAuthenticatedUser()
                 .Build();
             services.AddControllersWithViews(opts => opts.Filters.Add(new AuthorizeFilter()));
+
+            services.Configure<RouteValuesTenantStrategyOptions>(Configuration.GetSection("TenantStrategy"));
 
             services.AddTransient<IActionContextAccessor, ActionContextAccessor>();
 
@@ -68,18 +73,23 @@ namespace MultiTenancy.Web
                 var services = new ITenantService[]
                 {
                     new EnglishTenantService(),
-                    new WelshTenantService()
+                    new WelshTenantService(),
+                    new FrenchTenantService()
                 };
 
                 var index = 0;
                 foreach (var tenant in authContext.Tenants.ToList())
                 {
-                    mtc.ConfigureTenant(tenant.Name, cb =>
+                    mtc.ConfigureTenant(tenant.Name.ToUpper(), cb =>
                     {
                         cb.RegisterType(services[index].GetType()).As<ITenantService>();
                     });
                     index++;
                 }
+                mtc.ConfigureTenant("MultiTenant", cb =>
+                {
+                    cb.RegisterType(services[index].GetType()).As<ITenantService>();
+                });
             }
 
             return mtc;
@@ -115,11 +125,24 @@ namespace MultiTenancy.Web
             }
             app.UseStaticFiles();
 
-            app.UsePathBase("/test");
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseWhen(x => x.Request.RouteValues.ContainsKey("tenant"),
+                builder => builder.Use(async (context, next) =>
+                {
+                    var user = context.User as ClaimsPrincipal;
+                    if (user == null || !user.HasClaim(Models.Home.ClaimTypes.Tenant, context.Request.RouteValues["tenant"].ToString().ToUpper()))
+                    {
+                        context.Response.StatusCode = 401; //UnAuthorized
+                        await context.Response.WriteAsync($"You do not have permission to access '{context.Request.RouteValues["tenant"]}'.");
+                        return;
+                    }
+
+                    await next.Invoke();
+                }));
 
             app.UseEndpoints(endpoints =>
             {

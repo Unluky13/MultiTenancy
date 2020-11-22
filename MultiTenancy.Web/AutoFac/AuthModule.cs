@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using MultiTenancy.Auth;
 

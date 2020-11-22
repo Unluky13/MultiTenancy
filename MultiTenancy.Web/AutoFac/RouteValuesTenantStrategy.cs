@@ -1,16 +1,21 @@
 ﻿using Autofac.Multitenant;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using System;
 
 namespace MultiTenancy.Web.AutoFac
 {
+
     public class RouteValuesTenantStrategy : ITenantIdentificationStrategy
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public RouteValuesTenantStrategy(IHttpContextAccessor httpContextAccessor)
+        private readonly RouteValuesTenantStrategyOptions _options;
+
+        public RouteValuesTenantStrategy(IHttpContextAccessor httpContextAccessor, IOptions<RouteValuesTenantStrategyOptions> options)
         {
             _httpContextAccessor = httpContextAccessor;
+            _options = options.Value;
         }
 
         public bool TryIdentifyTenant(out object tenantId)
@@ -20,15 +25,21 @@ namespace MultiTenancy.Web.AutoFac
             {
                 if (_httpContextAccessor?.HttpContext?.Request != null)
                 {
-                    tenantId = _httpContextAccessor?.HttpContext.Request.Path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries)[0];
-                    tenantId = System.Web.HttpUtility.UrlDecode((string)tenantId);
+                    foreach(var part in _httpContextAccessor?.HttpContext.Request.Path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if(!part.Equals(_options.PathBase, StringComparison.OrdinalIgnoreCase))
+                        {
+                            tenantId = System.Web.HttpUtility.UrlDecode(part.ToUpper());
+                            break;
+                        }
+                    }
                 }
             }
             catch
             {
                 // Happens at app startup in IIS 7.0
             }
-            return tenantId != null;
+            return !string.IsNullOrWhiteSpace(tenantId?.ToString());
         }
     }
 }

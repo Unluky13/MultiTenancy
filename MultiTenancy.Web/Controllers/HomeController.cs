@@ -50,7 +50,7 @@ namespace MultiTenancy.Web.Controllers
                     claims.Add(new Claim(System.Security.Claims.ClaimTypes.Name, user.Username));
                     foreach (var tenant in user.Tenants)
                     {
-                        claims.Add(new Claim(Models.Home.ClaimTypes.Tenant, tenant.Tenant.Name));
+                        claims.Add(new Claim(Models.Home.ClaimTypes.Tenant, tenant.Tenant.Name.ToUpper()));
                     }
                     activeTenant = user.Tenants.First().Tenant.Name;
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
