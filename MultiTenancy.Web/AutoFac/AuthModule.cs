@@ -18,9 +18,6 @@ namespace MultiTenancy.Web.AutoFac
 
             builder.RegisterType<AuthContext>()
                 .AsSelf();
-
-            builder.RegisterType<RouteValuesTenantStrategy>()
-                .AsImplementedInterfaces();
         }
     }
 }

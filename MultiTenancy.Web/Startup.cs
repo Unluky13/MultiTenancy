@@ -1,19 +1,18 @@
 using Autofac;
 using Autofac.Multitenant;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MultiTenancy.Auth;
+using MultiTenancy.MultiTenant;
+using MultiTenancy.MultiTenant.Strategies;
 using MultiTenancy.Web.AutoFac;
 using MultiTenancy.Web.Services;
 using System.Linq;
-using System.Security.Claims;
 
 namespace MultiTenancy.Web
 {
@@ -29,14 +28,7 @@ namespace MultiTenancy.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var policy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
             services.AddControllersWithViews(opts => opts.Filters.Add(new AuthorizeFilter()));
-
-            services.Configure<RouteValuesTenantStrategyOptions>(Configuration.GetSection("TenantStrategy"));
-
-            services.AddTransient<IActionContextAccessor, ActionContextAccessor>();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(opts =>
@@ -48,6 +40,9 @@ namespace MultiTenancy.Web
 
             services.AddAutofacMultitenantRequestServices();
             services.AddRouting();
+
+            var strategyOptions = Configuration.GetSection("TenantStrategy").Get<RouteValuesTenantStrategyOptions>();
+            services.AddRouteValueStrategy(x => x.PathBase = strategyOptions.PathBase);
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
@@ -92,7 +87,6 @@ namespace MultiTenancy.Web
             return mtc;
         }
 
-
         private static void SeedData(AuthContext context)
         {
             var tenant1 = new Tenant() { Id = 1, Name = "Tenant 1" };
@@ -110,7 +104,7 @@ namespace MultiTenancy.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
             app.UseDeveloperExceptionPage();
             app.UseStaticFiles();
@@ -120,36 +114,9 @@ namespace MultiTenancy.Web
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseWhen(x => x.Request.RouteValues.ContainsKey("tenant"),
-                builder => builder.Use(async (context, next) =>
-                {
-                    var user = context.User as ClaimsPrincipal;
-                    if (user == null || !user.HasClaim(Models.Home.ClaimTypes.Tenant, context.Request.RouteValues["tenant"].ToString().ToUpper()))
-                    {
-                        context.Response.StatusCode = 401; //UnAuthorized
-                        await context.Response.WriteAsync($"You do not have permission to access '{context.Request.RouteValues["tenant"]}'.");
-                        return;
-                    }
+            app.UseMultiTenancyAuthentication(x => x.ClaimName = Models.Home.ClaimTypes.Tenant);
 
-                    await next.Invoke();
-                }));
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "empty",
-                    pattern: "",
-                    defaults: new { controller = "Home", action = "Index" });
-
-                endpoints.MapControllerRoute(
-                    name: "auth",
-                    pattern: "Home/{action=Index}/{id?}",
-                    defaults: new { controller = "Home" });
-
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{tenant}/{controller=Home}/{action=Index}/{id?}");
-            });
+            app.UseTenantInRouteValuesEndpoints();
         }
     }
 }

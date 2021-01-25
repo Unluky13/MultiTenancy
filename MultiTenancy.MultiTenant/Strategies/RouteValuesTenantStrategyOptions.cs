@@ -1,4 +1,6 @@
-﻿namespace MultiTenancy.Web.AutoFac
+﻿using System;
+
+namespace MultiTenancy.MultiTenant.Strategies
 {
     public class RouteValuesTenantStrategyOptions
     {
@@ -7,5 +9,13 @@
         /// before PathBase is set on the HttpContext.
         /// </summary>
         public string PathBase { get; set; }
+
+        internal void Validate()
+        {
+            if (string.IsNullOrWhiteSpace(PathBase))
+            {
+                throw new ArgumentNullException(nameof(PathBase));
+            }
+        }
     }
 }

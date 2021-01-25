@@ -1,21 +1,19 @@
 ﻿using Autofac.Multitenant;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using System;
 
-namespace MultiTenancy.Web.AutoFac
+namespace MultiTenancy.MultiTenant.Strategies
 {
-
-    public class RouteValuesTenantStrategy : ITenantIdentificationStrategy
+    internal class RouteValuesTenantStrategy : ITenantIdentificationStrategy
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         private readonly RouteValuesTenantStrategyOptions _options;
 
-        public RouteValuesTenantStrategy(IHttpContextAccessor httpContextAccessor, IOptions<RouteValuesTenantStrategyOptions> options)
+        public RouteValuesTenantStrategy(IHttpContextAccessor httpContextAccessor, RouteValuesTenantStrategyOptions options)
         {
             _httpContextAccessor = httpContextAccessor;
-            _options = options.Value;
+            _options = options;
         }
 
         public bool TryIdentifyTenant(out object tenantId)
@@ -25,9 +23,9 @@ namespace MultiTenancy.Web.AutoFac
             {
                 if (_httpContextAccessor?.HttpContext?.Request != null)
                 {
-                    foreach(var part in _httpContextAccessor?.HttpContext.Request.Path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries))
+                    foreach (var part in _httpContextAccessor?.HttpContext.Request.Path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries))
                     {
-                        if(!part.Equals(_options.PathBase, StringComparison.OrdinalIgnoreCase))
+                        if (!part.Equals(_options.PathBase, StringComparison.OrdinalIgnoreCase))
                         {
                             tenantId = System.Web.HttpUtility.UrlDecode(part.ToUpper());
                             break;
