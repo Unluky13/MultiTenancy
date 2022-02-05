@@ -38,6 +38,7 @@ namespace MultiTenancy.Simple
 
             services.AddMemoryCache();
             services.AddHttpContextAccessor();
+            services.AddScoped<ITenantMemoryCache, TenantCache>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
