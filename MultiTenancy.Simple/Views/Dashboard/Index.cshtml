@@ -1,8 +1,18 @@
 ﻿@model IEnumerable<string>
 
+@using Microsoft.Extensions.Caching.Memory;
+@inject ITenantMemoryCache Cache;
+
+<p>Names from the database.</p>
 <ul>
     @foreach (var value in Model)
     {
         <li>@value</li>
     }
 </ul>
+
+@{ 
+    var cachedValue = Cache.GetOrCreate("Test", _ => DateTime.Now);
+}
+
+<p>Date from tenant cache: @cachedValue.ToString()</p>

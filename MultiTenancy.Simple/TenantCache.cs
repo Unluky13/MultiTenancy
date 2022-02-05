@@ -54,7 +54,6 @@ namespace MultiTenancy.Simple
 
         public void Dispose()
         {
-            _cache.Dispose();
         }
 
         public void Remove(object key)

@@ -25,7 +25,8 @@ namespace MultiTenancy.Simple
                             new Uri($"https://{builtConfig["KeyVaultName"]}.vault.azure.net/"),
                             new DefaultAzureCredential());
                         config.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
-                    }
+                    } 
+
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

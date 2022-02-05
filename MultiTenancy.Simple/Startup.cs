@@ -34,7 +34,7 @@ namespace MultiTenancy.Simple
 
             services.AddRouting();
 
-            services.AddMultiTenantDatabases<TenantResolver>(Configuration.GetConnectionString("Auth"));
+            services.AddMultiTenantDatabases<TenantResolver>(Configuration["ConnectionStrings:Auth"]);
 
             services.AddMemoryCache();
             services.AddHttpContextAccessor();
