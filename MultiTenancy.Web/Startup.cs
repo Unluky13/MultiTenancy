@@ -94,10 +94,10 @@ namespace MultiTenancy.Web
             context.Tenants.AddRange(tenant1, tenant2);
 
             var user1 = new User() { Id = 1, Username = "Single" };
-            user1.Tenants.Add(new UserTenant() { User = user1, Tenant = tenant1 });
+            user1.Tenants.Add(new TenantUser() { User = user1, Tenant = tenant1 });
             var user2 = new User() { Id = 2, Username = "Multi" };
-            user2.Tenants.Add(new UserTenant() { User = user2, Tenant = tenant1 });
-            user2.Tenants.Add(new UserTenant() { User = user2, Tenant = tenant2 });
+            user2.Tenants.Add(new TenantUser() { User = user2, Tenant = tenant1 });
+            user2.Tenants.Add(new TenantUser() { User = user2, Tenant = tenant2 });
             context.Users.AddRange(user1, user2);
 
             context.SaveChanges();

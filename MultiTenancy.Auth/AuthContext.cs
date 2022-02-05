@@ -18,7 +18,7 @@ namespace MultiTenancy.Auth
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<UserTenant>().HasKey(nameof(UserTenant.TenantId), nameof(UserTenant.UserId));
+            modelBuilder.Entity<TenantUser>().HasKey(nameof(TenantUser.TenantId), nameof(TenantUser.UserId));
         }
     }
 }

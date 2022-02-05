@@ -1,10 +1,10 @@
-﻿using Autofac.Multitenant;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
+using MultiTenancy.Data;
 using System.Threading.Tasks;
 
 namespace MultiTenancy.MultiTenant.Middleware
 {
-    internal class MultiTenantAuthenticationMiddleware
+    public class MultiTenantAuthenticationMiddleware
     {
         public const string RouteValueKey = "tenant";
 
@@ -17,11 +17,11 @@ namespace MultiTenancy.MultiTenant.Middleware
             _options = options;
         }
 
-        public async Task Invoke(HttpContext context, ITenantIdentificationStrategy tenantStrategy)
+        public async Task Invoke(HttpContext context, ITenantResolver tenantResolver)
         {
             if (context.Request.RouteValues.ContainsKey(RouteValueKey))
             {
-                var tenant = tenantStrategy.IdentifyTenant<string>();
+                var tenant = tenantResolver.Resolve();
 
                 var user = context.User;
                 if (!UserHasPermissionForTenant(tenant, user))
