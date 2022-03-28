@@ -1,9 +1,10 @@
 ﻿@model IEnumerable<string>
 
 @using Microsoft.Extensions.Caching.Memory;
-@inject ITenantMemoryCache Cache;
+@inject ITenantMemoryCache TenantCache;
+@inject IMemoryCache GlobalCache;
 
-<p>Names from the database.</p>
+<p>Names from the tenant specific database.</p>
 <ul>
     @foreach (var value in Model)
     {
@@ -11,8 +12,18 @@
     }
 </ul>
 
-@{ 
-    var cachedValue = Cache.GetOrCreate("Test", _ => DateTime.Now);
+@{
+    var tenantCachedValue = TenantCache.GetOrCreate("Test", x =>
+    {
+        x.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10);
+        return DateTime.Now;
+    });
+    var globalCachedValue = GlobalCache.GetOrCreate("Test", x =>
+    {
+        x.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(15);
+        return DateTime.Now;
+    });
 }
 
-<p>Date from tenant cache: @cachedValue.ToString()</p>
+<p>Date from tenant cache (10 seconds): @tenantCachedValue.ToString()</p>
+<p>Date from global cache (15 seconds): @globalCachedValue.ToString()</p>

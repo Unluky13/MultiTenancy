@@ -16,19 +16,14 @@
 
             <div class="alert alert-info">
                 <p>
-                    The available users are:<br />
-                    Single<br />
-                    Multi
+                    Sign in as:<br />
                 </p>
             </div>
 
             <!-- Login Form -->
             <form method="post">
-                <input asp-for="Username" class="fadeIn second" placeholder="Username">
-                <p>
-                    <span asp-validation-for="Username"></span>
-                </p>
-                <input type="submit" class="fadeIn fourth" value="Log In">
+                <input type="submit" name="@Html.NameFor(model => model.Username)" value="Single" />
+                <input type="submit" name="@Html.NameFor(model => model.Username)" value="Multi" />
             </form>
 
         </div>
