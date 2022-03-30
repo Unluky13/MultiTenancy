@@ -4,14 +4,14 @@ This project demonstrates how an application can be made into a multi tenancy ap
 # Databases
 We are going to be using n+1 databases, where n is the total number of tenants.
 
-Each tenant will have its own database to hold all its information separately to ensure there is no possible way of accessing a different tenants data. This is modelled by the [TenantContext](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/Tenant/TenantContext.cs).
+Each tenant will have its own database to hold all its information separately to ensure there is no possible way of accessing a different tenant's data. This is modelled by the [TenantContext](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/Tenant/TenantContext.cs).
 
-The extra database is used to store al the users, tenants and links between the two. In this scenario, users can be linked to multiple tenants and has the ability to easily switch between tenants once logged in. Information about the tenant will store a friendly name and the connection string for the tenants database. This is modelled by the [AuthContext](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/Auth/AuthContext.cs).
+The extra database is used to store all the users, tenants and links between the two. In this scenario, users can be linked to multiple tenants and has the ability to easily switch between tenants once logged in. Information about the tenant will store a friendly name and the connection string for the tenant's database. This is modelled by the [AuthContext](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/Auth/AuthContext.cs).
 
 ## DbContext Injection
 Each time you want to inject either of the DbContexts, it needs to have the correct connection details passed in. 
 
-Rather than trying to set up the dependency injection to inject the correct DbOptions based on the current tenant or having the requesting service telling the context what the tenant is, it uses a [DbOptionsFactory](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/DbOptionsFactory.cs) that will either use the connection string from appsettings for the AuthContext type, or get the conection string from the AuthContext for the current tenant for the TenantContext. This Factory is then injected into the constructors and each context asks for the correct options.
+Rather than trying to set up the dependency injection to inject the correct DbOptions based on the current tenant or having the requesting service telling the context what the tenant is, it uses a [DbOptionsFactory](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/DbOptionsFactory.cs) that will either use the connection string from appsettings for the AuthContext type, or get the connection string from the AuthContext for the current tenant for the TenantContext. This Factory is then injected into the constructors and each context asks for the correct options.
 
 ```
   public class AuthContext : DbContext
@@ -67,7 +67,7 @@ For this we use a combination of different routing endpoints:
       pattern: $"{{{MultiTenantAuthenticationMiddleware.RouteValueKey}}}/{{controller=Home}}/{{action=Index}}/{{id?}}");
 ```
 
-Having the tenant in the route makes it simpe to create a sevice to get the current tenant:
+Having the tenant in the route makes it simple to create a service to get the current tenant:
 
 ```
   public class TenantResolver 
