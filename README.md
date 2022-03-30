@@ -1,9 +1,45 @@
 # Multitenancy Example
-This project demonstrates how an application can be turned into a multi tenancy application with a few simple changes.
+This project demonstrates how an application can be made into a multi tenancy application.
 
-It uses a database dedicated to user authentication and tenant registration and then a separate database for each tenant that contains the application informations.
+# Databases
+We are going to be using n+1 databases, where n is the total number of tenants.
 
-Users can be linked to any number of tenants in this scenario.
+Each tenant will have its own database to hold all its information separately to ensure there is no possible way of accessing a different tenants data. This is modelled by the [TenantContext](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/Tenant/TenantContext.cs).
+
+The extra database is used to store al the users, tenants and links between the two. In this scenario, users can be linked to multiple tenants andd has the ability to easily switch between tenants once logged in. As information about the tenant will store a friendly name and the connection string for the tenants database. This is modelled by the [AuthContext](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/Auth/AuthContext.cs).
+
+## DbContext Injection
+Each time you want to inject a Tenants DbContext, it needs to have the correct connection details passed in. 
+
+Rather than trying to set up the dependency injection to inject the correct DbOptions, it uses a [DbOptionsFactory](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Data/DbOptionsFactory.cs) that will either use the connection string from appsettings for the AuthContext type, or get the conection string from the AuthContext for the current tenant for the TenantContext. This Factory is then injected into the 2 DbContexts constructor and each context asks for the correct options.
+
+```
+  public class AuthContext : DbContext
+  {
+      public AuthContext(DbOptionsFactory optionsFactory) : base(optionsFactory.Create(DbContextType.Auth))
+      {
+
+      }
+      ...
+      
+  public class TenantContext : DbContext
+  {
+      public TenantContext(DbOptionsFactory optionsFactory) : base(optionsFactory.Create(DbContextType.Tenant))
+      {
+
+      }
+      ...
+```
+
+This means that injecting each of the DbContexts is trivial with no thought required of what the current tenant is.
+
+```
+  public class Service
+  {
+      public Service(AuthContext authContext, TenantContext tenantContext)
+      {
+      ...
+```
 
 # Tenant Resolution Strategy
 The first decision is how to determine the current tenant for each request. In this project we will be using the request path to resolve the tenant.
@@ -33,10 +69,6 @@ For this we use a combination of different routing endpoints:
 
 # Authorisation
 To make sure the current user has permission to access the current tenant, we will be using a claim for each tenant the user has access to. We can then add some [middleware](https://github.com/Unluky13/MultiTenancy/blob/master/MultiTenancy.Web/Services/Middleware/MultiTenantAuthenticationMiddleware.cs) to check to see if the appropriate claim is held by the user and return a 401 if it is not.
-
-# Databases
-
-***Todo***
 
 # Caching
 
